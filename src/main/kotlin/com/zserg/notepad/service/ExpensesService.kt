@@ -16,7 +16,7 @@ import java.util.*
 
 @Service
 class ExpensesService(
-    @Value("\${notepad.url:http://s4.zserg.net:8091}")
+    @Value("\${notepad.url}")
     val host: String
 ) {
     val food = "(maxima|rimi|norfa|lidl|food)".toRegex(RegexOption.IGNORE_CASE)
