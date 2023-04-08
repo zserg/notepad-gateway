@@ -23,7 +23,7 @@ class ExpensesService(
     val health = "(dentist|drugs|health)".toRegex(RegexOption.IGNORE_CASE)
     val utilities = "(youtube|netflix|rental|utilities)".toRegex(RegexOption.IGNORE_CASE)
     val transport = "(parking|gas|ticket)".toRegex(RegexOption.IGNORE_CASE)
-    val misc = "(senukai|depo|ikea|book|amazon)".toRegex(RegexOption.IGNORE_CASE)
+    val misc = "(senukai|depo|ikea|book|amazon|misc|philips)".toRegex(RegexOption.IGNORE_CASE)
     val amount = "\\d+[.,]*\\d{1,2}".toRegex(RegexOption.IGNORE_CASE)
 
     fun getExpensesForCurrentMonth(): Mono<List<Expense>> {
@@ -35,7 +35,7 @@ class ExpensesService(
             .uri("/notes?fromDate=$fromDate&toDate=$toDate")
             .retrieve()
             .bodyToMono(object : ParameterizedTypeReference<List<NoteResponse>>() {})
-            .map(::analyze)
+            .map(::getExpenses)
     }
 
     fun getExpensesSummaryForCurrentMonth(): Mono<List<Expense>> {
@@ -50,29 +50,37 @@ class ExpensesService(
             .map(::analyze)
     }
 
+    fun getExpenses(notes: List<NoteResponse>): List<Expense> {
+        return notes
+            .filter { it.tags?.contains("budget")?:false }
+            .map { parseExpense(it) }
+            .filterNotNull()
+            .toList()
+    }
+
     fun analyze(notes: List<NoteResponse>): List<Expense> {
          return notes
             .filter { it.tags?.contains("budget")?:false }
-            .map { parseExpense(it.content) }
+            .map { parseExpense(it) }
             .filterNotNull()
             .groupingBy { it.type }.aggregate { key, accumulator: Expense?, element, first ->
             if (first) // first element
                 element
             else
-                Expense(key, null, accumulator!!.value.add(element.value))
+                Expense(key, null, accumulator!!.value.add(element.value), null, null)
         }.values.toList()
     }
 
-    fun parseExpense(note: String): Expense? {
-        val amount = amount.find(note)?.value?.let { BigDecimal(it) } ?: return null
+    fun parseExpense(note: NoteResponse): Expense? {
+        val amount = amount.find(note.content)?.value?.let { BigDecimal(it) } ?: return null
 
-        food.find(note)?.value?.let { return@parseExpense Expense(ExpenseType.FOOD, null, amount) }
-        health.find(note)?.value?.let { return@parseExpense Expense(ExpenseType.HEALTH, null, amount) }
-        utilities.find(note)?.value?.let { return@parseExpense Expense(ExpenseType.UTILITIES, null, amount) }
-        transport.find(note)?.value?.let { return@parseExpense Expense(ExpenseType.TRANSPORT, null, amount) }
-        misc.find(note)?.value?.let { return@parseExpense Expense(ExpenseType.MISC, null, amount) }
+        food.find(note.content)?.value?.let { return@parseExpense Expense(ExpenseType.FOOD, null, amount, note.createdAt, note.content) }
+        health.find(note.content)?.value?.let { return@parseExpense Expense(ExpenseType.HEALTH, null, amount, note.createdAt, note.content) }
+        utilities.find(note.content)?.value?.let { return@parseExpense Expense(ExpenseType.UTILITIES, null, amount, note.createdAt, note.content) }
+        transport.find(note.content)?.value?.let { return@parseExpense Expense(ExpenseType.TRANSPORT, null, amount, note.createdAt, note.content) }
+        misc.find(note.content)?.value?.let { return@parseExpense Expense(ExpenseType.MISC, null, amount, note.createdAt, note.content) }
 
-        return Expense(ExpenseType.UNKNOWN, null, amount)
+        return Expense(ExpenseType.UNKNOWN, null, amount, note.createdAt, note.content)
     }
 
 }
