@@ -22,7 +22,7 @@ class ExpensesService(
     val food = "(maxima|rimi|norfa|lidl|food)".toRegex(RegexOption.IGNORE_CASE)
     val health = "(dentist|drugs|health)".toRegex(RegexOption.IGNORE_CASE)
     val utilities = "(youtube|netflix|rental|utilities)".toRegex(RegexOption.IGNORE_CASE)
-    val transport = "(parking|gas|ticket)".toRegex(RegexOption.IGNORE_CASE)
+    val transport = "(parking|gas|ticket|transport)".toRegex(RegexOption.IGNORE_CASE)
     val misc = "(senukai|depo|ikea|book|amazon|misc|philips)".toRegex(RegexOption.IGNORE_CASE)
     val amount = "\\d+[.,]*\\d{1,2}".toRegex(RegexOption.IGNORE_CASE)
 
