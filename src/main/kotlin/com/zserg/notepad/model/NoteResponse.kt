@@ -28,4 +28,14 @@ data class NoteResponse(
             createdAt = note.createdAt
         )
     }
+
+    fun toNote(): Note {
+        return Note(
+            id = id,
+            title = title ?: "",
+            content = content,
+            tags = tags ?: emptyList(),
+            createdAt = createdAt
+        )
+    }
 }
