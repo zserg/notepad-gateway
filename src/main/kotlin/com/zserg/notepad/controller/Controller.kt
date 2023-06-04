@@ -13,6 +13,7 @@ import reactor.core.publisher.Mono
 import java.util.*
 
 @Controller
+//@CrossOrigin(origins = ["*"])
 @RequestMapping("/")
 class Controller {
 
@@ -37,6 +38,13 @@ class Controller {
     @ResponseBody
     open fun uploadFile(@RequestParam("file") file: MultipartFile): UploadFileResponse {
         val response: UploadFileResponse = flashcardService.uploadFile(file)
+        return response
+    }
+
+    @GetMapping("/flashcard/answer")
+    @ResponseBody
+    open fun getAnswer(@RequestParam("question") question: String): String {
+        val response: String = flashcardService.getAnswerFromAiSimple(question)
         return response
     }
 

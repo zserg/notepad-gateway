@@ -30,6 +30,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("com.theokanning.openai-gpt3-java:service:0.12.0")
     testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.6.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.testcontainers:junit-jupiter")
