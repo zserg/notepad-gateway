@@ -1,11 +1,11 @@
 package com.zserg.notepad.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.zserg.notepad.model.*
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
+import org.springframework.web.client.RestTemplate
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
 import java.math.BigDecimal
@@ -19,11 +19,15 @@ class ExpensesService(
     @Value("\${notepad.url}")
     val host: String
 ) {
+    @Autowired
+    lateinit var restTemplate: RestTemplate
+
     val food = "(maxima|rimi|norfa|lidl|food)".toRegex(RegexOption.IGNORE_CASE)
     val health = "(dentist|drugs|health)".toRegex(RegexOption.IGNORE_CASE)
     val utilities = "(youtube|netflix|rental|utilities)".toRegex(RegexOption.IGNORE_CASE)
     val transport = "(parking|gas|ticket|transport)".toRegex(RegexOption.IGNORE_CASE)
     val misc = "(senukai|depo|ikea|book|amazon|misc|philips)".toRegex(RegexOption.IGNORE_CASE)
+
     val amount = "\\d+[.,]*\\d{1,2}".toRegex(RegexOption.IGNORE_CASE)
 
     fun getExpensesForCurrentMonth(): Mono<List<Expense>> {
@@ -82,5 +86,17 @@ class ExpensesService(
 
         return Expense(ExpenseType.UNKNOWN, null, amount, note.createdAt, note.content)
     }
+
+    fun postExpense(request: String): String? {
+        val expense = NoteRequest(
+            id = null,
+            title = null,
+            content = request,
+            tags = listOf("budget")
+        )
+        val id = restTemplate.postForObject("$host/notes", expense, String::class.java)
+        return id
+    }
+
 
 }
