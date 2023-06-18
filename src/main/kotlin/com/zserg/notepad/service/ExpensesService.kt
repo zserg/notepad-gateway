@@ -28,7 +28,7 @@ class ExpensesService(
     val transport = "(parking|gas|ticket|transport)".toRegex(RegexOption.IGNORE_CASE)
     val misc = "(senukai|depo|ikea|book|amazon|misc|philips)".toRegex(RegexOption.IGNORE_CASE)
 
-    val amount = "\\d+[.,]*\\d{1,2}".toRegex(RegexOption.IGNORE_CASE)
+    val amount = "\\d+[.,]*\\d{0,2}".toRegex(RegexOption.IGNORE_CASE)
 
     fun getExpensesForCurrentMonth(): Mono<List<Expense>> {
         val fromDate = LocalDate.now().withDayOfMonth(1).atStartOfDay().format(DateTimeFormatter.ISO_DATE_TIME)
