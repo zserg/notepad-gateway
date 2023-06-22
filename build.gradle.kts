@@ -61,7 +61,8 @@ jib {
     }
     to {
         image = "docker.io/zserg/notepad-gateway"
-        tags = setOf("0.1", "latest")
+//        tags = setOf("0.1", "latest")
+        tags = setOf("0.2-SNAPSHOT")
     }
     container {
         mainClass = "com.zserg.notepad.NotepadGatewayApplicationKt"

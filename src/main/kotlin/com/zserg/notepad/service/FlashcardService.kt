@@ -142,4 +142,11 @@ class FlashcardService {
         return response?.choices?.firstOrNull()?.message?.content ?: ""
     }
 
+
+    fun getFlashcard(): Flashcard {
+        val result = restTemplate.getForObject("$host/notes/flashcard", NoteResponse::class.java)
+        return Flashcard(question = result?.title ?: "", answer = result?.content ?: "" )
+    }
+
+
 }

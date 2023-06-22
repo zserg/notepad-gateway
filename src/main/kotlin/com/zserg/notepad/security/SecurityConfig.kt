@@ -4,12 +4,15 @@ package com.zserg.notepad.security
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.invoke
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator
 import org.springframework.security.oauth2.core.OAuth2TokenValidator
 import org.springframework.security.oauth2.jwt.*
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -18,6 +21,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 open class SecurityConfig {
     @Value("\${allowed.origins}")
     private lateinit var allowedOrigins: String
@@ -74,6 +78,16 @@ open class SecurityConfig {
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
+    }
+
+    @Bean
+    fun jwtAuthenticationConverter(): JwtAuthenticationConverter? {
+        val converter = JwtGrantedAuthoritiesConverter()
+        converter.setAuthoritiesClaimName("permissions")
+        converter.setAuthorityPrefix("")
+        val jwtConverter = JwtAuthenticationConverter()
+        jwtConverter.setJwtGrantedAuthoritiesConverter(converter)
+        return jwtConverter
     }
 
 }

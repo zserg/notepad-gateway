@@ -1,5 +1,7 @@
 package com.zserg.notepad.controller
 
+import com.zserg.notepad.model.Flashcard
+import com.zserg.notepad.model.NoteResponse
 import com.zserg.notepad.model.UploadFileResponse
 import com.zserg.notepad.service.FlashcardService
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,6 +23,13 @@ class FlashcardController {
     open fun uploadFile(@RequestParam("file") file: MultipartFile): UploadFileResponse {
         val response: UploadFileResponse = flashcardService.uploadFile(file)
         return response
+    }
+
+    @GetMapping("")
+    @ResponseBody
+    fun getFlashcard(): Flashcard {
+        val flashcard = flashcardService.getFlashcard()
+        return flashcard
     }
 
     @GetMapping("/answer")
