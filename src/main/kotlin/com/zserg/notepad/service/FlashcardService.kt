@@ -28,10 +28,10 @@ class FlashcardService {
     fun uploadFile(file: MultipartFile): UploadFileResponse {
         val bytes = file.inputStream.readAllBytes()
         val content = String(bytes)
-        val questions = parse(content)
+        val result = parse(content)
         var updatedNotes = 0
 
-        questions.forEach {
+        result.questions.forEach {
             val notes: Array<NoteResponse>? =
                 restTemplate.getForObject("$host/notes?title=${it.first}", Array<NoteResponse>::class.java)
             if (notes?.firstOrNull() == null) {
@@ -39,7 +39,7 @@ class FlashcardService {
                     id = null,
                     title = it.first,
                     content = it.second,
-                    tags = listOf("flashcard")
+                    tags = listOf("flashcard") + result.tags
                 )
                 val id = restTemplate.postForObject("$host/notes", save, String::class.java)
                 println("Created note with id $id")
@@ -53,15 +53,19 @@ class FlashcardService {
             }
         }
 
-        return UploadFileResponse(questions.size, updatedNotes)
+        return UploadFileResponse(result.questions.size, updatedNotes)
     }
 
-    fun parse(content: String): MutableList<Pair<String, String>> {
+    fun parse(content: String): ParseResult {
         val pairs = mutableListOf<Pair<String, String>>()
         var currentPair: Pair<String, String>? = null
 
+        var tags = listOf<String>()
         content.split("\n").forEach { line ->
-            if (line.isBlank()) {
+            if (line.startsWith("//tags=")){
+                val result = "=(.*)".toRegex().find(line)
+                tags = result?.groups?.get(1)?.value?.split(",")?: listOf()
+            }else if (line.isBlank()) {
                 // Start a new pair
                 currentPair?.let { pairs.add(it) }
                 currentPair = null
@@ -74,17 +78,19 @@ class FlashcardService {
             } else {
                 // Start a new pair or add to the existing pair
                 val text = line.trim()
-                if (currentPair == null) {
-                    currentPair = text to ""
+                currentPair = if (currentPair == null) {
+                    text to ""
                 } else {
-                    currentPair = currentPair!!.copy(second = currentPair!!.second + text + "\n")
+                    currentPair!!.copy(second = currentPair!!.second + text + "\n")
                 }
             }
         }
 
         currentPair?.let { pairs.add(it) }
-        return pairs
+        return ParseResult(tags, pairs)
     }
+
+    class ParseResult(val tags: List<String>, val questions: List<Pair<String, String>>)
 
     fun getAnswerFromAi(question: String): String {
         val token = System.getenv("OPENAI_TOKEN")
