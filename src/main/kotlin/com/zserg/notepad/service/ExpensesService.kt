@@ -63,16 +63,25 @@ class ExpensesService(
     }
 
     fun analyze(notes: List<NoteResponse>): List<Expense> {
-         return notes
-            .filter { it.tags?.contains("budget")?:false }
+        val list = notes
+            .filter { it.tags?.contains("budget") ?: false }
             .map { parseExpense(it) }
             .filterNotNull()
             .groupingBy { it.type }.aggregate { key, accumulator: Expense?, element, first ->
-            if (first) // first element
-                element
-            else
-                Expense(key, null, accumulator!!.value.add(element.value), null, null)
-        }.values.toList()
+                if (first) // first element
+                    element
+                else
+                    Expense(key, null, accumulator!!.value.add(element.value), null, null)
+            }.values.toMutableList()
+
+        val total = list.sumOf { it.value }
+        val fixed = list.filter { it.type == ExpenseType.FOOD || it.type == ExpenseType.UTILITIES }.sumOf { it.value }
+        val miscTotal = total - fixed
+
+        list.add(Expense(ExpenseType.FIXED, null, fixed, null, null))
+        list.add(Expense(ExpenseType.MISC_TOTAL, null, miscTotal, null, null))
+        list.add(Expense(ExpenseType.TOTAL, null, total, null, null))
+        return list
     }
 
     fun parseExpense(note: NoteResponse): Expense? {

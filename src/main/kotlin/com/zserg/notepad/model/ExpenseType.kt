@@ -7,4 +7,7 @@ enum class ExpenseType (val type: String) {
     UTILITIES("Utilities"),
     HEALTH("Health"),
     UNKNOWN("Unknown"),
-}
+    TOTAL("Total"),
+    MISC_TOTAL("MiscTotal"),
+    FIXED("Fixed")
+   }
