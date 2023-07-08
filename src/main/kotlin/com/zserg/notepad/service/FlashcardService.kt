@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.postForObject
 import org.springframework.web.multipart.MultipartFile
 import java.util.*
 
@@ -33,7 +34,7 @@ class FlashcardService {
 
         result.questions.forEach {
             val notes: Array<NoteResponse>? =
-                restTemplate.getForObject("$host/notes?title=${it.first}", Array<NoteResponse>::class.java)
+                restTemplate.postForObject("$host/notes/find", FindRequest().apply { title = it.first }, Array<NoteResponse>::class.java)
             if (notes?.firstOrNull() == null) {
                 val save = NoteRequest(
                     id = null,
@@ -58,35 +59,34 @@ class FlashcardService {
 
     fun parse(content: String): ParseResult {
         val pairs = mutableListOf<Pair<String, String>>()
-        var currentPair: Pair<String, String>? = null
+        var pair: Pair<String, String>? = null
 
         var tags = listOf<String>()
-        content.split("\n").forEach { line ->
-            if (line.startsWith("//tags=")){
+        var question = false
+        var answer = false
+
+        for (line in content.split("\n")) {
+            if (line.startsWith("//tags=")) {
                 val result = "=(.*)".toRegex().find(line)
-                tags = result?.groups?.get(1)?.value?.split(",")?: listOf()
-            }else if (line.isBlank()) {
-                // Start a new pair
-                currentPair?.let { pairs.add(it) }
-                currentPair = null
-            } else if (line.startsWith("###")) {
-                // Add a new element to the current pair
-                val element = line.removePrefix("###").trim()
-                currentPair?.let { pair ->
-                    currentPair = pair.copy(second = pair.second + element)
-                }
+                tags = result?.groups?.get(1)?.value?.split(",") ?: listOf()
+            } else if ("Q[0-9]+:".toRegex().containsMatchIn(line)) {
+                pair?.let { pairs.add(it) }
+                pair = Pair(line, "")
+                question = true
+                answer = false
+            } else if (line.startsWith("Answer:")) {
+                question = false
+                answer = true
+                pair = pair!!.copy(second = pair.second + line)
             } else {
-                // Start a new pair or add to the existing pair
-                val text = line.trim()
-                currentPair = if (currentPair == null) {
-                    text to ""
-                } else {
-                    currentPair!!.copy(second = currentPair!!.second + text + "\n")
+                if (question) {
+                    pair = pair!!.copy(first = pair.first + line)
+                } else if(answer) {
+                    pair = pair!!.copy(second = pair.second + line)
                 }
             }
         }
-
-        currentPair?.let { pairs.add(it) }
+        pair?.let { pairs.add(it) }
         return ParseResult(tags, pairs)
     }
 
@@ -151,7 +151,7 @@ class FlashcardService {
 
     fun getFlashcard(): Flashcard {
         val result = restTemplate.getForObject("$host/notes/flashcard", NoteResponse::class.java)
-        return Flashcard(question = result?.title ?: "", answer = result?.content ?: "" )
+        return Flashcard(question = result?.title ?: "", answer = result?.content ?: "")
     }
 
 
